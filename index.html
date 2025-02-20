@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yürü Kazanın Admin Paneli</title>
+  <!-- Google Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap">
+  <style>
+    /* Global Reset & Box Sizing */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    /* Genel Stil */
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      line-height: 1.6;
+    }
+    /* Giriş Ekranı */
+    #loginDiv {
+      max-width: 400px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    #loginDiv h2 {
+      margin-bottom: 20px;
+      color: #339D05;
+    }
+    #loginDiv input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    #loginDiv button {
+      width: 100%;
+      padding: 12px;
+      background-color: #339D05;
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #loginDiv button:hover {
+      background-color: #2c7a03;
+    }
+    #loginMessage {
+      color: #e74c3c;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+    /* Admin Paneli */
+    #adminPanel {
+      display: none;
+      padding: 20px;
+    }
+    /* Navigasyon Menüsü */
+    #navBar {
+      background: #333;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    #navBar button {
+      background: #555;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      margin: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #navBar button:hover {
+      background: #444;
+    }
+    #navBar button.active {
+      background: #339D05;
+    }
+    /* Paneller */
+    .panel {
+      display: none;
+    }
+    .panel.active {
+      display: block;
+    }
+    .container {
+      background: #fff;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 500;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="file"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    button[type="submit"],
+    .modal-content button {
+      background-color: #339D05;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button[type="submit"]:hover,
+    .modal-content button:hover {
+      background-color: #2c7a03;
+    }
+    /* Tablo Stilleri */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    table th, table td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    table th {
+      background: #f4f4f4;
+    }
+    /* Modal Stilleri */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+    }
+    .modal-content .close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #aaa;
+    }
+    .modal-content .close:hover {
+      color: #000;
+    }
+    .hidden {
+      display: none;
+    }
+    /* Responsive */
+    @media(max-width: 768px) {
+      #navBar {
+        flex-direction: column;
+      }
+      #navBar button {
+        margin: 5px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Giriş Ekranı -->
+  <div id="loginDiv">
+    <h2>Admin Girişi</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Kullanıcı Adı" required>
+      <input type="password" id="password" placeholder="Şifre" required>
+      <button type="submit">Giriş Yap</button>
+    </form>
+    <div id="loginMessage"></div>
+  </div>
+
+  <!-- Admin Paneli (Giriş yapıldığında gösterilecek) -->
+  <div id="adminPanel">
+    <!-- Navigasyon Menüsü -->
+    <div id="navBar">
+      <button data-panel="notificationPanel" class="active">Bildirim Gönderme</button>
+      <button data-panel="scrollingTextPanel">Kayan Yazı Güncelleme</button>
+      <button data-panel="prizeUploadPanel">Ödül Yükleme</button>
+      <button data-panel="prizesManagementPanel">Ödüller Yönetimi</button>
+      <button data-panel="rewardsPanel">Ödül Talepleri</button>
+    </div>
+    
+    <!-- Paneller -->
+    <div id="panels">
+      <!-- 1. Bildirim Gönderme Paneli -->
+      <div id="notificationPanel" class="panel active">
+        <div class="container">
+          <h1>Bildirim Gönder</h1>
+          <form id="notificationForm">
+            <label for="title">Başlık:</label>
+            <input type="text" id="title" required>
+            <label for="message">Mesaj:</label>
+            <textarea id="message" rows="4" required></textarea>
+            <button type="submit">Gönder</button>
+          </form>
+          <div id="status"></div>
+        </div>
+        <!-- Firebase SDK (compat sürümleri) -->
+        <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+        <script>
+          const firebaseConfig = {
+            apiKey: "AIzaSyCvZneWgYNwlwbgOZC1jF-ByFWpOpyoXFw",
+            authDomain: "sndnm-a3cdc.firebaseapp.com",
+            databaseURL: "https://sndnm-a3cdc-default-rtdb.firebaseio.com",
+            projectId: "sndnm-a3cdc",
+            storageBucket: "sndnm-a3cdc.firebasestorage.app",
+            messagingSenderId: "1006859037713",
+            appId: "1:1006859037713:web:b4b1af95b16e9e91d395b0",
+            measurementId: "G-GEXHFL8RDS"
+          };
+          if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+          const database = firebase.database();
+          const notificationForm = document.getElementById('notificationForm');
+          const statusDiv = document.getElementById('status');
+          notificationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('title').value.trim();
+            const message = document.getElementById('message').value.trim();
+            if (title === "" || message === "") {
+              statusDiv.textContent = "Lütfen tüm alanları doldurun.";
+              return;
+            }
+            const notificationData = {
+              title: title,
+              message: message,
+              sent: false,
+              timestamp: Date.now()
+            };
+            database.ref("notifications").push(notificationData, function(error) {
+              if (error) {
+                statusDiv.textContent = "Bildirim gönderilemedi: " + error;
+              } else {
+                statusDiv.textContent = "Bildirim gönderildi.";
+                notificationForm.reset();
+              }
+            });
+          });
+        </script>
+      </div>
+      
+      <!-- 2. Kayan Yazı Güncelleme Paneli -->
+      <div id="scrollingTextPanel" class="panel">
+        <div class="container">
+          <h1>Kayan Yazı Güncelleme Paneli</h1>
+          <form id="quoteForm">
+            <label for="scrollingText">Yeni Kayan Yazı:</label>
+            <textarea id="scrollingText" placeholder="Buraya yeni metni girin..." required></textarea>
+            <button type="submit">Güncelle</button>
+          </form>
+          <div id="statusScrolling"></div>
+        </div>
+        <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+        <script>
+          const firebaseConfig2 = {
+            apiKey: "AIzaSyCvZneWgYNwlwbgOZC1jF-ByFWpOpyoXFw",
+            authDomain: "sndnm-a3cdc.firebaseapp.com",
+            databaseURL: "https://sndnm-a3cdc-default-rtdb.firebaseio.com",
+            projectId: "sndnm-a3cdc",
+            storageBucket: "sndnm-a3cdc.firebasestorage.app",
+            messagingSenderId: "1006859037713",
+            appId: "1:1006859037713:web:b4b1af95b16e9e91d395b0",
+            measurementId: "G-GEXHFL8RDS"
+          };
+          if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig2); }
+          const database2 = firebase.database();
+          const quoteForm = document.getElementById('quoteForm');
+          const statusScrolling = document.getElementById('statusScrolling');
+          quoteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newText = document.getElementById('scrollingText').value.trim();
+            if(newText === "") {
+              statusScrolling.textContent = "Lütfen geçerli bir metin girin.";
+              return;
+            }
+            database2.ref('KayanYazi').set(newText, function(error) {
+              if(error) {
+                statusScrolling.textContent = "Güncelleme başarısız: " + error;
+              } else {
+                statusScrolling.textContent = "Kayan yazı başarıyla güncellendi.";
+                quoteForm.reset();
+              }
+            });
+          });
+        </script>
+      </div>
+      
+      <!-- 3. Ödül Yükleme Paneli -->
+      <div id="prizeUploadPanel" class="panel">
+        <div class="container">
+          <h2>Ödül Yükleme</h2>
+          <form id="uploadForm">
+            <label for="titlePrize">Başlık:</label>
+            <input type="text" id="titlePrize" required>
+            <label for="description">Açıklama:</label>
+            <textarea id="description" rows="4" required></textarea>
+            <label for="score">Puan:</label>
+            <input type="number" id="score" required>
+            <label for="image">Resim:</label>
+            <input type="file" id="image" accept="image/*" required>
+            <button type="submit">Yükle</button>
+          </form>
+          <div class="message" id="uploadMessage"></div>
+        </div>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+        <script>
+          var firebaseConfig3 = {
+            apiKey: "AIzaSyCvZneWgYNwlwbgOZC1jF-ByFWpOpyoXFw",
+            authDomain: "sndnm-a3cdc.firebaseapp.com",
+            databaseURL: "https://sndnm-a3cdc-default-rtdb.firebaseio.com",
+            projectId: "sndnm-a3cdc",
+            storageBucket: "sndnm-a3cdc.firebasestorage.app",
+            messagingSenderId: "1006859037713",
+            appId: "1:1006859037713:web:b4b1af95b16e9e91d395b0",
+            measurementId: "G-GEXHFL8RDS"
+          };
+          if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig3); }
+          var database3 = firebase.database();
+          var storage = firebase.storage();
+          const uploadForm = document.getElementById('uploadForm');
+          const uploadMessage = document.getElementById('uploadMessage');
+          uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const titlePrize = document.getElementById('titlePrize').value;
+            const description = document.getElementById('description').value;
+            const score = parseInt(document.getElementById('score').value);
+            const imageFile = document.getElementById('image').files[0];
+            if(!imageFile) {
+              uploadMessage.innerText = "Lütfen bir resim seçin.";
+              return;
+            }
+            const storageRef = storage.ref('prize_images/' + Date.now() + '_' + imageFile.name);
+            const uploadTask = storageRef.put(imageFile);
+            uploadTask.on('state_changed', 
+              function progress(snapshot) {
+                var percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                uploadMessage.innerText = "Yükleniyor: " + Math.round(percent) + "%";
+              }, 
+              function error(err) {
+                uploadMessage.innerText = "Hata: " + err.message;
+              }, 
+              function complete() {
+                uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                  const newPrizeRef = database3.ref('prizes').push();
+                  newPrizeRef.set({
+                    title: titlePrize,
+                    description: description,
+                    score: score,
+                    imageUrl: downloadURL
+                  }, function(error) {
+                    if (error) {
+                      uploadMessage.innerText = "Hata: " + error.message;
+                    } else {
+                      uploadMessage.innerText = "Ödül başarıyla yüklendi!";
+                      uploadForm.reset();
+                    }
+                  });
+                });
+              }
+            );
+          });
+        </script>
+      </div>
+      
+      <!-- 4. Ödüller Yönetim Paneli -->
+      <div id="prizesManagementPanel" class="panel">
+        <div class="container">
+          <h1>Ödüller Yönetim Paneli</h1>
+          <table id="prizesTable">
+            <thead>
+              <tr>
+                <th>Ödül Resmi</th>
+                <th>Ödül Başlığı</th>
+                <th>Açıklama</th>
+                <th>Puan</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Ödül kayıtları burada listelenecek -->
+            </tbody>
+          </table>
+        </div>
+        <!-- Düzenleme Modal'ı -->
+        <div id="editModal" class="modal">
+          <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Ödülü Düzenle</h2>
+            <form id="editForm">
+              <input type="hidden" id="editPrizeId">
+              <input type="hidden" id="currentImageUrl">
+              <label for="editTitle">Başlık:</label>
+              <input type="text" id="editTitle" required>
+              <label for="editDescription">Açıklama:</label>
+              <textarea id="editDescription" rows="4" required></textarea>
+              <label for="editScore">Puan:</label>
+              <input type="number" id="editScore" required>
+              <label for="editImageFile">Resim Seçin (Yeni resim seçmek istemiyorsanız boş bırakın):</label>
+              <input type="file" id="editImageFile" accept="image/*">
+              <button type="button" class="save-btn" onclick="savePrizeChanges()">Kaydet</button>
+              <button type="button" class="cancel-btn" onclick="closeEditModal()">İptal</button>
+            </form>
+          </div>
+        </div>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+        <script>
+          var firebaseConfig4 = {
+            apiKey: "AIzaSyCvZneWgYNwlwbgOZC1jF-ByFWpOpyoXFw",
+            authDomain: "sndnm-a3cdc.firebaseapp.com",
+            databaseURL: "https://sndnm-a3cdc-default-rtdb.firebaseio.com",
+            projectId: "sndnm-a3cdc",
+            storageBucket: "sndnm-a3cdc.firebasestorage.app",
+            messagingSenderId: "1006859037713",
+            appId: "1:1006859037713:web:b4b1af95b16e9e91d395b0",
+            measurementId: "G-GEXHFL8RDS"
+          };
+          if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig4); }
+          var prizesRef = firebase.database().ref('prizes');
+          function fetchPrizes() {
+            prizesRef.on('value', function(snapshot) {
+              var prizesTableBody = document.getElementById('prizesTable').getElementsByTagName('tbody')[0];
+              prizesTableBody.innerHTML = '';
+              snapshot.forEach(function(childSnapshot) {
+                var prize = childSnapshot.val();
+                var prizeId = childSnapshot.key;
+                var title = prize.title || 'Başlık yok';
+                var description = prize.description || '';
+                var imageUrl = prize.imageUrl || '';
+                var score = prize.score || '';
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                  '<td>' + (imageUrl ? '<img src="' + imageUrl + '" alt="Ödül Resmi" style="width:100px;height:auto;border-radius:5px;">' : 'Resim yok') + '</td>' +
+                  '<td>' + title + '</td>' +
+                  '<td>' + description + '</td>' +
+                  '<td>' + score + '</td>' +
+                  '<td>' +
+                    '<button class="btn" onclick="openEditModal(\'' + prizeId + '\')">Düzenle</button> ' +
+                    '<button class="btn delete" onclick="deletePrize(\'' + prizeId + '\')">Sil</button>' +
+                  '</td>';
+                prizesTableBody.appendChild(tr);
+              });
+            });
+          }
+          function openEditModal(prizeId) {
+            prizesRef.child(prizeId).once('value').then(function(snapshot) {
+              var prize = snapshot.val();
+              if (prize) {
+                document.getElementById('editPrizeId').value = prizeId;
+                document.getElementById('editTitle').value = prize.title || '';
+                document.getElementById('editDescription').value = prize.description || '';
+                document.getElementById('editScore').value = prize.score || '';
+                document.getElementById('currentImageUrl').value = prize.imageUrl || '';
+                document.getElementById('editImageFile').value = "";
+                document.getElementById('editModal').style.display = 'flex';
+              } else {
+                alert("Ödül bulunamadı!");
+              }
+            }).catch(function(error) {
+              alert("Hata: " + error.message);
+            });
+          }
+          function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+          }
+          function savePrizeChanges() {
+            var prizeId = document.getElementById('editPrizeId').value;
+            var newTitle = document.getElementById('editTitle').value;
+            var newDescription = document.getElementById('editDescription').value;
+            var newScore = parseFloat(document.getElementById('editScore').value);
+            var currentImageUrl = document.getElementById('currentImageUrl').value;
+            var fileInput = document.getElementById('editImageFile');
+            if (fileInput.files && fileInput.files[0]) {
+              var file = fileInput.files[0];
+              var storageRef = firebase.storage().ref('prizes/' + prizeId + '/' + file.name);
+              var uploadTask = storageRef.put(file);
+              uploadTask.on('state_changed', 
+                function progress(snapshot) {},
+                function error(err) {
+                  alert("Resim yükleme hatası: " + err.message);
+                },
+                function complete() {
+                  uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                    updatePrize(prizeId, newTitle, newDescription, newScore, downloadURL);
+                  });
+                }
+              );
+            } else {
+              updatePrize(prizeId, newTitle, newDescription, newScore, currentImageUrl);
+            }
+          }
+          function updatePrize(prizeId, title, description, score, imageUrl) {
+            var updatedData = {
+              title: title,
+              description: description,
+              score: score,
+              imageUrl: imageUrl
+            };
+            prizesRef.child(prizeId).update(updatedData, function(error) {
+              if (error) {
+                alert("Güncelleme hatası: " + error.message);
+              } else {
+                alert("Ödül başarıyla güncellendi!");
+                closeEditModal();
+              }
+            });
+          }
+          function deletePrize(prizeId) {
+            if (confirm("Bu ödülü silmek istediğinize emin misiniz?")) {
+              prizesRef.child(prizeId).remove(function(error) {
+                if (error) {
+                  alert("Silme hatası: " + error.message);
+                } else {
+                  alert("Ödül başarıyla silindi!");
+                }
+              });
+            }
+          }
+          fetchPrizes();
+        </script>
+      </div>
+      
+      <!-- 5. Ödül Talepleri Paneli -->
+      <div id="rewardsPanel" class="panel">
+        <div class="container">
+          <h1>Ödül Talepleri Paneli</h1>
+          <table id="rewardsTable">
+            <thead>
+              <tr>
+                <th>Ödül Başlığı</th>
+                <th>Kullanıcı E‑Posta</th>
+                <th>Ödeme Yöntemi</th>
+                <th>Maliyet</th>
+                <th>Teslim Durumu</th>
+                <th>Tarih</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Kayıtlar buraya eklenecek -->
+            </tbody>
+          </table>
+        </div>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+        <script>
+          var firebaseConfig5 = {
+            apiKey: "AIzaSyCvZneWgYNwlwbgOZC1jF-ByFWpOpyoXFw",
+            authDomain: "sndnm-a3cdc.firebaseapp.com",
+            databaseURL: "https://sndnm-a3cdc-default-rtdb.firebaseio.com",
+            projectId: "sndnm-a3cdc",
+            storageBucket: "sndnm-a3cdc.firebasestorage.app",
+            messagingSenderId: "1006859037713",
+            appId: "1:1006859037713:web:b4b1af95b16e9e91d395b0",
+            measurementId: "G-GEXHFL8RDS"
+          };
+          if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig5); }
+          var rewardsRef = firebase.database().ref('panel_rewards');
+          function fetchRewards() {
+            rewardsRef.on('value', function(snapshot) {
+              var rewardsTableBody = document.getElementById('rewardsTable').getElementsByTagName('tbody')[0];
+              rewardsTableBody.innerHTML = '';
+              var records = [];
+              snapshot.forEach(function(childSnapshot) {
+                records.push({
+                  key: childSnapshot.key,
+                  data: childSnapshot.val()
+                });
+              });
+              records.sort(function(a, b) {
+                if(a.data.odulTeslim === b.data.odulTeslim) return 0;
+                return a.data.odulTeslim ? 1 : -1;
+              });
+              records.forEach(function(record) {
+                var key = record.key;
+                var data = record.data;
+                var prizeTitle = data.prizeTitle || 'Başlık bulunamadı';
+                var userEmail = data.userEmail || 'E‑posta bulunamadı';
+                var paymentMethod = data.paymentMethod || '';
+                var cost = data.cost || '';
+                var odulTeslim = data.odulTeslim;
+                var timestamp = data.timestamp;
+                var dateString = '';
+                if (timestamp) {
+                  var date = new Date(parseInt(timestamp));
+                  dateString = date.toLocaleString();
+                }
+                var deliveredText = odulTeslim ? "Teslim Edildi" : "Teslim Edilmedi";
+                var btnHTML = '';
+                if (!odulTeslim) {
+                  btnHTML = '<button class="btn" onclick="markDelivered(\'' + key + '\')">Teslim Edildi</button>';
+                }
+                var tr = document.createElement('tr');
+                tr.innerHTML = 
+                  '<td>' + prizeTitle + '</td>' +
+                  '<td>' + userEmail + '</td>' +
+                  '<td>' + paymentMethod + '</td>' +
+                  '<td>' + cost + ' puan</td>' +
+                  '<td>' + deliveredText + '</td>' +
+                  '<td>' + dateString + '</td>' +
+                  '<td>' + btnHTML + '</td>';
+                rewardsTableBody.appendChild(tr);
+              });
+            });
+          }
+          function markDelivered(claimKey) {
+            var claimRef = firebase.database().ref('panel_rewards/' + claimKey);
+            claimRef.update({ odulTeslim: true }, function(error) {
+              if (error) {
+                alert('Güncelleme hatası: ' + error.message);
+              } else {
+                alert('Ödül teslim edildi olarak güncellendi.');
+              }
+            });
+          }
+          fetchRewards();
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sayfa Genel İşlevleri: Giriş Kontrolü & Panel Navigasyonu -->
+  <script>
+    // Giriş İşlemi
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var username = document.getElementById('username').value;
+      var password = document.getElementById('password').value;
+      if(username === 'kazanyuru' && password === 'Ajyusıer') {
+        document.getElementById('loginDiv').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+      } else {
+        document.getElementById('loginMessage').innerText = 'Hatalı kullanıcı adı veya şifre.';
+      }
+    });
+    
+    // Panel Navigasyonu
+    var navButtons = document.querySelectorAll('#navBar button');
+    var panels = document.querySelectorAll('.panel');
+    
+    navButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        navButtons.forEach(function(btn) { btn.classList.remove('active'); });
+        this.classList.add('active');
+        var panelToShow = this.getAttribute('data-panel');
+        panels.forEach(function(panel) {
+          panel.classList.remove('active');
+          if(panel.id === panelToShow) {
+            panel.classList.add('active');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
