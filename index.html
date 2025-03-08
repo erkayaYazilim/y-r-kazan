@@ -119,7 +119,8 @@
     input[type="text"],
     input[type="number"],
     input[type="file"],
-    textarea {
+    textarea,
+    select {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
@@ -128,7 +129,8 @@
       font-size: 14px;
     }
     button[type="submit"],
-    .modal-content button {
+    .modal-content button,
+    #massGiftPanel button[type="submit"] {
       background-color: #339D05;
       color: #fff;
       border: none;
@@ -138,7 +140,8 @@
       transition: background 0.3s;
     }
     button[type="submit"]:hover,
-    .modal-content button:hover {
+    .modal-content button:hover,
+    #massGiftPanel button[type="submit"]:hover {
       background-color: #2c7a03;
     }
     /* Tablo Stilleri */
@@ -222,6 +225,7 @@
       <button data-panel="prizeUploadPanel">Ödül Yükleme</button>
       <button data-panel="prizesManagementPanel">Ödüller Yönetimi</button>
       <button data-panel="rewardsPanel">Ödül Talepleri</button>
+      <button data-panel="massGiftPanel">Toplu Hediye</button>
     </div>
     
     <!-- Paneller -->
@@ -664,6 +668,79 @@
             });
           }
           fetchRewards();
+        </script>
+      </div>
+      
+      <!-- 6. Toplu Hediye Paneli -->
+      <div id="massGiftPanel" class="panel">
+        <div class="container">
+          <h1>Toplu Hediye Gönder</h1>
+          <form id="massGiftForm">
+            <label for="giftType">Hediye Türü:</label>
+            <select id="giftType" required>
+              <option value="puan">Puan</option>
+              <option value="reklam">Reklam İzleme</option>
+            </select>
+            <label for="giftAmount">Gönderilecek Miktar:</label>
+            <input type="number" id="giftAmount" min="1" required>
+            <button type="submit">Gönder</button>
+          </form>
+          <div id="massGiftStatus"></div>
+          <div id="massGiftProgressContainer" style="margin-top: 20px; display: none;">
+            <label>İlerleme:</label>
+            <progress id="massGiftProgress" value="0" max="100" style="width: 100%;"></progress>
+          </div>
+        </div>
+        <script>
+          // Toplu Hediye Paneli İşlemleri
+          var massGiftForm = document.getElementById('massGiftForm');
+          massGiftForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var giftType = document.getElementById('giftType').value;
+            var giftAmount = parseInt(document.getElementById('giftAmount').value);
+            var statusDiv = document.getElementById('massGiftStatus');
+            var progressBar = document.getElementById('massGiftProgress');
+            var progressContainer = document.getElementById('massGiftProgressContainer');
+            if(isNaN(giftAmount) || giftAmount <= 0) {
+              statusDiv.innerText = "Lütfen geçerli bir miktar girin.";
+              return;
+            }
+            statusDiv.innerText = "";
+            progressBar.value = 0;
+            progressContainer.style.display = "block";
+  
+            var usersRef = firebase.database().ref('Kullanıcılar');
+            usersRef.once('value', function(snapshot) {
+              var totalUsers = snapshot.numChildren();
+              if(totalUsers === 0) {
+                statusDiv.innerText = "Kullanıcı bulunamadı.";
+                progressContainer.style.display = "none";
+                return;
+              }
+              var processed = 0;
+              snapshot.forEach(function(childSnapshot) {
+                var userKey = childSnapshot.key;
+                var userData = childSnapshot.val();
+                var fieldToUpdate = (giftType === 'puan') ? 'PuanSayısı' : 'ReklamİzlemeSayısı';
+                var currentValue = parseInt(userData[fieldToUpdate]) || 0;
+                var newValue = currentValue + giftAmount;
+                var updateData = {};
+                updateData[fieldToUpdate] = newValue;
+                // İsteğe bağlı: Bakiyesi veya ToplamBakiye güncellemesi de yapılabilir.
+                usersRef.child(userKey).update(updateData, function(error) {
+                  processed++;
+                  var progress = Math.round((processed / totalUsers) * 100);
+                  progressBar.value = progress;
+                  if(processed === totalUsers) {
+                    statusDiv.innerText = "Toplu hediye gönderimi tamamlandı.";
+                    setTimeout(function() {
+                      progressContainer.style.display = "none";
+                    }, 2000);
+                  }
+                });
+              });
+            });
+          });
         </script>
       </div>
     </div>
